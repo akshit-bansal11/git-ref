@@ -1,6 +1,7 @@
 const THEME_KEY = 'git-ref-theme'
 
 let allCategories = []
+let domCache = null
 let gridEl, searchEl, themeToggleEl, emptyEl
 
 export async function init() {
@@ -31,19 +32,12 @@ function applyInitialTheme() {
   ) {
     document.documentElement.classList.add('dark')
   }
-  updateToggleIcon()
 }
 
 function toggleTheme() {
   document.documentElement.classList.toggle('dark')
   const isDark = document.documentElement.classList.contains('dark')
   localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light')
-  updateToggleIcon()
-}
-
-function updateToggleIcon() {
-  const isDark = document.documentElement.classList.contains('dark')
-  themeToggleEl.textContent = isDark ? '\u2600' : '\u263D'
 }
 
 // ── Search ────────────────────────────────────────────────
@@ -82,43 +76,59 @@ const SYNONYMS = {
 function handleSearch() {
   const query = searchEl.value.toLowerCase().trim()
 
+  if (!domCache) return
+
   if (!query) {
-    render(allCategories)
+    domCache.forEach(cat => {
+      cat.el.classList.remove('hidden')
+      cat.commands.forEach(cmd => cmd.el.classList.remove('hidden'))
+    })
+    emptyEl.classList.add('hidden')
     return
   }
 
-  // Split query into words and filter out stop words
   const queryTokens = query
     .split(/\s+/)
     .filter((token) => token.length > 0 && !STOP_WORDS.has(token))
 
-  // If query consists only of stop words, fallback to just splitting
   const tokensToUse = queryTokens.length > 0 ? queryTokens : query.split(/\s+/).filter(t => t.length > 0)
 
-  const filtered = allCategories
-    .map((cat) => ({
-      ...cat,
-      commands: cat.commands.filter((cmd) => {
-        const textToSearch = `${cmd.name} ${cmd.description} ${cmd.usage}`.toLowerCase()
-        // Check if ALL provided tokens (or their synonyms) are present in the command info
-        return tokensToUse.every((token) => {
-          const synonyms = SYNONYMS[token] || [token]
-          return synonyms.some((syn) => textToSearch.includes(syn))
-        })
-      }),
-    }))
-    .filter((cat) => cat.commands.length > 0)
+  let anyVisible = false
 
-  render(filtered)
+  domCache.forEach(cat => {
+    let catHasVisible = false
+    cat.commands.forEach(cmd => {
+      const matches = tokensToUse.every((token) => {
+        const synonyms = SYNONYMS[token] || [token]
+        return synonyms.some((syn) => cmd.search.includes(syn))
+      })
+      if (matches) {
+        cmd.el.classList.remove('hidden')
+        catHasVisible = true
+      } else {
+        cmd.el.classList.add('hidden')
+      }
+    })
+
+    if (catHasVisible) {
+      cat.el.classList.remove('hidden')
+      anyVisible = true
+    } else {
+      cat.el.classList.add('hidden')
+    }
+  })
+
+  if (anyVisible) {
+    emptyEl.classList.add('hidden')
+  } else {
+    emptyEl.classList.remove('hidden')
+  }
 }
 
 // ── Render ────────────────────────────────────────────────
 
-const COPY_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-</svg>`
-const TICK_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-600 dark:text-green-400"><polyline points="20 6 9 17 4 12"></polyline></svg>`
+const COPY_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>`
+const TICK_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-green-600 dark:text-green-500"><path d="M20 6 9 17l-5-5"/></svg>`
 
 function handleCopy(e) {
   const btn = e.target.closest('.copy-btn')
@@ -139,50 +149,24 @@ function esc(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-const PALETTES = [
-  {
-    borderOuter: 'border-blue-500/20 dark:border-blue-400/20',
-    title: 'text-blue-700 dark:text-blue-400 border-b-blue-500/10 dark:border-b-blue-400/10',
-    codeBg: 'bg-white/50 dark:bg-zinc-800/50 border-blue-200 dark:border-blue-800/50',
-    codeText: 'text-blue-900 dark:text-blue-100',
-    btnText: 'text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-zinc-900/10 dark:hover:bg-zinc-50/10'
-  },
-  {
-    borderOuter: 'border-emerald-500/20 dark:border-emerald-400/20',
-    title: 'text-emerald-700 dark:text-emerald-400 border-b-emerald-500/10 dark:border-b-emerald-400/10',
-    codeBg: 'bg-white/50 dark:bg-zinc-800/50 border-emerald-200 dark:border-emerald-800/50',
-    codeText: 'text-emerald-900 dark:text-emerald-100',
-    btnText: 'text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-900/10 dark:hover:bg-zinc-50/10'
-  },
-  {
-    borderOuter: 'border-amber-500/20 dark:border-amber-400/20',
-    title: 'text-amber-700 dark:text-amber-400 border-b-amber-500/10 dark:border-b-amber-400/10',
-    codeBg: 'bg-white/50 dark:bg-zinc-800/50 border-amber-200 dark:border-amber-800/50',
-    codeText: 'text-amber-900 dark:text-amber-100',
-    btnText: 'text-zinc-500 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-zinc-900/10 dark:hover:bg-zinc-50/10'
-  },
-  {
-    borderOuter: 'border-violet-500/20 dark:border-violet-400/20',
-    title: 'text-violet-700 dark:text-violet-400 border-b-violet-500/10 dark:border-b-violet-400/10',
-    codeBg: 'bg-white/50 dark:bg-zinc-800/50 border-violet-200 dark:border-violet-800/50',
-    codeText: 'text-violet-900 dark:text-violet-100',
-    btnText: 'text-zinc-500 dark:text-zinc-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-zinc-900/10 dark:hover:bg-zinc-50/10'
-  },
-  {
-    borderOuter: 'border-rose-500/20 dark:border-rose-400/20',
-    title: 'text-rose-700 dark:text-rose-400 border-b-rose-500/10 dark:border-b-rose-400/10',
-    codeBg: 'bg-white/50 dark:bg-zinc-800/50 border-rose-200 dark:border-rose-800/50',
-    codeText: 'text-rose-900 dark:text-rose-100',
-    btnText: 'text-zinc-500 dark:text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-zinc-900/10 dark:hover:bg-zinc-50/10'
-  },
-  {
-    borderOuter: 'border-cyan-500/20 dark:border-cyan-400/20',
-    title: 'text-cyan-700 dark:text-cyan-400 border-b-cyan-500/10 dark:border-b-cyan-400/10',
-    codeBg: 'bg-white/50 dark:bg-zinc-800/50 border-cyan-200 dark:border-cyan-800/50',
-    codeText: 'text-cyan-900 dark:text-cyan-100',
-    btnText: 'text-zinc-500 dark:text-zinc-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-zinc-900/10 dark:hover:bg-zinc-50/10'
-  }
-]
+const CATEGORY_MAP = {
+  'gh repo': 'GitHub Repository',
+  'gh pr': 'GitHub Pull Request',
+  'gh issue': 'GitHub Issue',
+  'gh workflow & run': 'GitHub Workflow & Run',
+  'gh auth & config': 'GitHub Auth & Config',
+  'gh gist & release': 'GitHub Gist & Release',
+  'gh secret & variable': 'GitHub Secret & Variable',
+  'gh label & milestone': 'GitHub Label & Milestone',
+  'gh search': 'GitHub Search',
+  'gh api & alias': 'GitHub API & Alias',
+  'gh codespace': 'GitHub Codespace',
+  'gh cache & org': 'GitHub Cache & Organization',
+  'gh browse & status': 'GitHub Browse & Status',
+  'gh attestation': 'GitHub Attestation',
+  'gh ruleset & environment': 'GitHub Ruleset & Environment',
+  'gh extension': 'GitHub Extension'
+}
 
 function render(categories) {
   if (categories.length === 0) {
@@ -196,25 +180,23 @@ function render(categories) {
   gridEl.innerHTML = categories
     .map(
       (cat, idx) => {
-        const p = PALETTES[idx % PALETTES.length]
         return `
-    <div class="mb-6 break-inside-avoid rounded-xl border ${p.borderOuter} bg-zinc-50/60 dark:bg-zinc-950/60 backdrop-blur-md p-5 shadow-sm">
-      <h2 class="text-xs font-bold uppercase tracking-widest ${p.title} mb-4 border-b pb-2">
-        ${esc(cat.category)}
-      </h2>
-      <div class="space-y-4 cursor-default">
+    <div class="mb-6 break-inside-avoid rounded-xl border border-zinc-200 bg-white text-zinc-950 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50">
+      <div class="flex flex-col space-y-1.5 p-6 pb-3">
+        <h3 class="font-semibold leading-none tracking-tight">
+          ${esc(CATEGORY_MAP[cat.category] || cat.category)}
+        </h3>
+      </div>
+      <div class="p-6 pt-0 space-y-6">
         ${cat.commands
           .map(
             (cmd) => `
-          <div class="group">
-            <p class="text-[0.9rem] text-zinc-900/90 dark:text-zinc-200/90 leading-snug mb-2">${esc(cmd.description)}</p>
-            <div class="relative border ${p.codeBg} rounded-md overflow-hidden">
-              <pre class="text-xs font-mono ${p.codeText} font-semibold px-3 py-2.5 pr-10 overflow-x-auto whitespace-pre-wrap">${esc(cmd.usage)}</pre>
-              <button type="button" class="copy-btn absolute top-1.5 right-1.5 p-1.5 rounded-md ${p.btnText} opacity-0 group-hover:opacity-100 transition-all duration-100 ease-out focus:outline-none focus:opacity-100" aria-label="Copy command" data-cmd="${esc(cmd.usage).replace(/"/g, '&quot;')}">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
+          <div class="group flex flex-col space-y-2">
+            <p class="text-sm text-zinc-500 dark:text-zinc-400 leading-snug">${esc(cmd.description)}</p>
+            <div class="relative rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 overflow-hidden">
+              <pre class="text-[0.85rem] font-mono font-semibold text-zinc-950 dark:text-zinc-50 px-4 py-3 pr-12 overflow-x-auto whitespace-pre-wrap">${esc(cmd.usage)}</pre>
+              <button type="button" class="copy-btn absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 hover:text-zinc-950 hover:bg-zinc-200/50 dark:text-zinc-400 dark:hover:text-zinc-50 dark:hover:bg-zinc-800/50 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-300" aria-label="Copy command" data-cmd="${esc(cmd.usage).replace(/"/g, '&quot;')}">
+                ${COPY_ICON}
               </button>
             </div>
           </div>
@@ -227,4 +209,14 @@ function render(categories) {
       }
     )
     .join('')
+
+  domCache = categories.map((cat, catIdx) => {
+    return {
+      el: gridEl.children[catIdx],
+      commands: cat.commands.map((cmd, cmdIdx) => ({
+        el: gridEl.children[catIdx].querySelector('.space-y-6').children[cmdIdx],
+        search: `${cmd.name} ${cmd.description} ${cmd.usage}`.toLowerCase()
+      }))
+    }
+  })
 }
