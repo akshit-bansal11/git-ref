@@ -15,11 +15,8 @@ export default async function Home() {
         
         {/* Hero Section */}
         <header className="text-center space-y-6">
-          <div className="inline-block px-4 py-1.5 rounded-full border border-neutral-800 bg-neutral-900/50 text-xs text-neutral-400 mb-4 tracking-wider uppercase font-semibold">
-            Zero-Config Documentation
-          </div>
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white mb-4">
-            git_ref
+            .cmd_ref
           </h1>
           <p className="text-lg md:text-xl text-neutral-400 max-w-lg mx-auto leading-relaxed">
             Every command. One place.
@@ -40,11 +37,6 @@ export default async function Home() {
         </div>
         
       </div>
-      
-      {/* Footer */}
-      <footer className="mt-24 text-center text-sm text-neutral-600">
-        <p>Drop a .json file to add a new tool.</p>
-      </footer>
     </main>
   );
 }

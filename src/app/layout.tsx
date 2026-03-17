@@ -8,7 +8,7 @@ const jetbrainsMono = {
 };
 
 export const metadata: Metadata = {
-  title: "git_ref | Every command. One place.",
+  title: "Command Reference | Every command. One place.",
   description: "Developer command-reference website. All your tool commands in one minimal, fast place.",
 };
 
