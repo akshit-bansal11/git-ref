@@ -1258,10 +1258,6 @@
         {
           "command": "git fetch origin refs/notes/commits:refs/notes/commits",
           "description": "Fetch git notes from the origin remote"
-        },
-        {
-          "command": "git push --no-verify",
-          "description": "Bypass pre-push hooks to forcefully transmit data"
         }
       ]
     },
