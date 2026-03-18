@@ -1,0 +1,15 @@
+export const aliases: Record<string, string[]> = {
+  undo: ["reset", "revert", "restore", "checkout"],
+  "go back": ["checkout", "revert", "reset"],
+  delete: ["remove", "rm", "prune", "drop"],
+  save: ["commit", "stash", "add"],
+  stage: ["add", "index"],
+  unstage: ["reset HEAD", "restore --staged"],
+  rename: ["move", "mv"],
+  update: ["pull", "fetch", "merge", "rebase"],
+  publish: ["push"],
+  combine: ["merge", "rebase", "squash"],
+  history: ["log", "reflog"],
+  list: ["ls", "show", "status"],
+  compare: ["diff"],
+};

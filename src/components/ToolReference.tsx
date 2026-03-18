@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Search, Copy, Check, ChevronLeft, Command } from "lucide-react";
 import type { ToolData, CommandCategory, ToolCommand } from "@/lib/data";
+import { aliases } from "@/lib/searchAliases";
 
 export default function ToolReference({ data }: { data: ToolData }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,18 +30,23 @@ export default function ToolReference({ data }: { data: ToolData }) {
 
   // Filter commands
   const filteredCategories = useMemo(() => {
-    if (!searchQuery.trim()) return data.categories;
-    
-    const query = searchQuery.toLowerCase();
-    
+    const query = normalizeSearchText(searchQuery);
+
+    if (!query) return data.categories;
+
+    const searchSignals = buildSearchSignals(query);
+
     return data.categories
       .map((cat: CommandCategory) => {
-        const matchingCommands = cat.commands.filter((cmd: ToolCommand) => {
-          return (
-             cmd.command?.toLowerCase().includes(query) ||
-             cmd.description?.toLowerCase().includes(query)
-          );
-        });
+        const matchingCommands = cat.commands
+          .map((cmd: ToolCommand) => ({
+            cmd,
+            score: scoreCommand(cmd, cat.title, searchSignals),
+          }))
+          .filter(({ score }) => score > 0)
+          .sort((a, b) => b.score - a.score || a.cmd.command.localeCompare(b.cmd.command))
+          .map(({ cmd }) => cmd);
+
         return { ...cat, commands: matchingCommands };
       })
       .filter((cat: CommandCategory) => cat.commands.length > 0);
@@ -263,6 +269,175 @@ function CommandCard({ cmd, accent }: { cmd: ToolCommand, accent: string }) {
       </div>
     </div>
   );
+}
+
+interface SearchSignals {
+  normalizedQuery: string;
+  queryTokens: string[];
+  aliasPhrases: string[];
+  aliasTokens: string[];
+}
+
+function normalizeSearchText(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]+/g, " ")
+    .replace(/\s+/g, " ");
+}
+
+function tokenizeSearchText(value: string): string[] {
+  const normalized = normalizeSearchText(value);
+  return normalized ? normalized.split(" ") : [];
+}
+
+function buildSearchSignals(query: string): SearchSignals {
+  const normalizedQuery = normalizeSearchText(query);
+  const queryTokens = tokenizeSearchText(normalizedQuery);
+  const directTerms = new Set([normalizedQuery, ...queryTokens]);
+  const aliasPhrases = getAliasPhrases(normalizedQuery).filter((term) => !directTerms.has(term));
+  const aliasTokens = Array.from(
+    new Set(
+      aliasPhrases
+        .flatMap((term) => tokenizeSearchText(term))
+        .filter((token) => !directTerms.has(token))
+    )
+  );
+
+  return {
+    normalizedQuery,
+    queryTokens,
+    aliasPhrases,
+    aliasTokens,
+  };
+}
+
+function getAliasPhrases(query: string): string[] {
+  if (!query) return [];
+
+  const expandedTerms = new Set<string>();
+
+  Object.entries(aliases).forEach(([key, values]) => {
+    const normalizedKey = normalizeSearchText(key);
+    const normalizedValues = values.map((value) => normalizeSearchText(value));
+    const searchTerms = [normalizedKey, ...normalizedValues];
+    const matchesAlias = searchTerms.some((term) => matchesAliasTerm(query, term));
+
+    if (!matchesAlias) return;
+
+    expandedTerms.add(normalizedKey);
+    normalizedValues.forEach((value) => expandedTerms.add(value));
+  });
+
+  return Array.from(expandedTerms);
+}
+
+function containsPhrase(target: string, phrase: string): boolean {
+  if (!target || !phrase) return false;
+  return target.includes(phrase);
+}
+
+function matchesAliasTerm(target: string, term: string): boolean {
+  if (!target || !term) return false;
+
+  if (term.includes(" ")) {
+    return containsPhrase(target, term);
+  }
+
+  return tokenizeSearchText(target).includes(term);
+}
+
+function getTokenVariants(token: string): string[] {
+  const variants = new Set([token]);
+
+  if (token.endsWith("ies") && token.length > 4) {
+    variants.add(`${token.slice(0, -3)}y`);
+  }
+
+  if (token.endsWith("es") && token.length > 4) {
+    variants.add(token.slice(0, -2));
+  }
+
+  if (token.endsWith("s") && token.length > 3) {
+    variants.add(token.slice(0, -1));
+  }
+
+  return Array.from(variants).filter((variant) => variant.length > 1);
+}
+
+function matchesToken(target: string, token: string): boolean {
+  const targetTokens = tokenizeSearchText(target).map((candidate) => candidate.replace(/^-+/, ""));
+
+  return getTokenVariants(token).some((variant) =>
+    targetTokens.some((candidate) => candidate === variant || candidate.startsWith(variant))
+  );
+}
+
+function scoreCommand(cmd: ToolCommand, category: string, searchSignals: SearchSignals): number {
+  const commandTarget = normalizeSearchText(cmd.command);
+  const descriptionTarget = normalizeSearchText(cmd.description);
+  const categoryTarget = normalizeSearchText(category);
+  const searchTarget = `${commandTarget} ${descriptionTarget} ${categoryTarget}`.trim();
+  const { normalizedQuery, queryTokens, aliasPhrases, aliasTokens } = searchSignals;
+
+  let score = 0;
+
+  if (containsPhrase(searchTarget, normalizedQuery)) score += 10;
+  if (queryTokens.length > 0 && queryTokens.every((token) => matchesToken(searchTarget, token))) score += 6;
+
+  queryTokens.forEach((token) => {
+    if (matchesToken(commandTarget, token)) {
+      score += 3;
+      return;
+    }
+
+    if (matchesToken(descriptionTarget, token)) {
+      score += 2;
+      return;
+    }
+
+    if (matchesToken(categoryTarget, token)) {
+      score += 1;
+    }
+  });
+
+  if (containsPhrase(commandTarget, normalizedQuery)) score += 4;
+  if (queryTokens.length > 0 && queryTokens.every((token) => matchesToken(commandTarget, token))) score += 3;
+  if (containsPhrase(categoryTarget, normalizedQuery)) score += 2;
+
+  aliasPhrases.forEach((term) => {
+    if (matchesAliasTerm(commandTarget, term)) {
+      score += 3;
+      return;
+    }
+
+    if (matchesAliasTerm(descriptionTarget, term)) {
+      score += 2;
+      return;
+    }
+
+    if (matchesAliasTerm(categoryTarget, term)) {
+      score += 1;
+    }
+  });
+
+  aliasTokens.forEach((token) => {
+    if (matchesToken(commandTarget, token)) {
+      score += 2;
+      return;
+    }
+
+    if (matchesToken(descriptionTarget, token)) {
+      score += 1;
+      return;
+    }
+
+    if (matchesToken(categoryTarget, token)) {
+      score += 1;
+    }
+  });
+
+  return score;
 }
 
 function getCategorySlug(title: string): string {
