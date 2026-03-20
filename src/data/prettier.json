@@ -1,7 +1,7 @@
 {
     "name": "Prettier",
     "slug": "prettier",
-    "logo": "https://media-server.akshitbansal.me/api/images/logos/prettier.svg",
+    "logo": "https://media-server.akshitbansal.me/api/images/logos/prettier-dark.svg",
     "accent": "#e94560",
     "description": "Opinionated code formatter supporting multiple languages",
     "categories": [
