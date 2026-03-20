@@ -1,7 +1,7 @@
 {
   "name": "GitHub CLI",
   "slug": "github",
-  "logo": "/icons/github.svg",
+  "logo": "https://media-server.akshitbansal.me/api/images/logos/github-dark.svg",
   "accent": "#ffffff",
   "description": "GitHub on the command line",
   "categories": [

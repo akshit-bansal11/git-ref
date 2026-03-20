@@ -1,7 +1,7 @@
 {
     "name": "Vitest",
     "slug": "vitest",
-    "logo": "/icons/vitest.svg",
+    "logo": "https://media-server.akshitbansal.me/api/images/logos/vitest.svg",
     "accent": "#729B1B",
     "description": "Vite-native unit testing framework with Jest-compatible API",
     "categories": [

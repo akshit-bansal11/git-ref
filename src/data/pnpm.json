@@ -1,7 +1,7 @@
 {
     "name": "PNPM",
     "slug": "pnpm",
-    "logo": "/icons/pnpm.svg",
+    "logo": "https://media-server.akshitbansal.me/api/images/logos/pnpm.svg",
     "accent": "#F69220",
     "description": "Fast, disk space efficient package manager for Node.js",
     "categories": [
