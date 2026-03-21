@@ -24,7 +24,7 @@ export default async function Home() {
         </header>
 
         {/* Tools Grid */}
-        <div className="w-full grid lg:grid-cols-4 sm:grid-cols-2 md:grid-cols-3 grid-cols-1 gap-6">
+        <div className="w-full grid lg:grid-cols-3 sm:grid-cols-2 md:grid-cols-3 grid-cols-1 gap-6">
           {tools.length === 0 ? (
             <div className="col-span-full text-center py-12 text-neutral-500">
               No tools found in <code className="bg-neutral-900 px-2 py-1 rounded">src/data/</code>.
