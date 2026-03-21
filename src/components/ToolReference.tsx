@@ -1,61 +1,16 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, Copy, Check, ChevronLeft, Command } from "lucide-react";
+import { Copy, Check, ChevronLeft } from "lucide-react";
 import type { ToolData, CommandCategory, ToolCommand } from "@/lib/data";
-import { aliases } from "@/lib/searchAliases";
 
 export default function ToolReference({ data }: { data: ToolData }) {
-  const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("");
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  
-  // Handle Ctrl+K / Cmd+K
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-      }
-      if (e.key === "Escape") {
-        setSearchQuery("");
-        searchInputRef.current?.blur();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  // Filter commands
-  const filteredCategories = useMemo(() => {
-    const query = normalizeSearchText(searchQuery);
-
-    if (!query) return data.categories;
-
-    const searchSignals = buildSearchSignals(query);
-
-    return data.categories
-      .map((cat: CommandCategory) => {
-        const matchingCommands = cat.commands
-          .map((cmd: ToolCommand) => ({
-            cmd,
-            score: scoreCommand(cmd, cat.title, searchSignals),
-          }))
-          .filter(({ score }) => score > 0)
-          .sort((a, b) => b.score - a.score || a.cmd.command.localeCompare(b.cmd.command))
-          .map(({ cmd }) => cmd);
-
-        return { ...cat, commands: matchingCommands };
-      })
-      .filter((cat: CommandCategory) => cat.commands.length > 0);
-  }, [data.categories, searchQuery]);
 
   // Scroll spy
   useEffect(() => {
-    if (searchQuery) return; // disable scroll spy while searching to prevent jank
-    
     const observer = new IntersectionObserver(
       (entries) => {
         const visibleSections = entries.filter(e => e.isIntersecting);
@@ -76,7 +31,7 @@ export default function ToolReference({ data }: { data: ToolData }) {
     });
     
     return () => observer.disconnect();
-  }, [data.categories, searchQuery]);
+  }, [data.categories]);
 
   return (
     <div className="min-h-screen font-mono text-neutral-200">
@@ -100,25 +55,6 @@ export default function ToolReference({ data }: { data: ToolData }) {
               <span className="font-semibold text-lg text-white tracking-tight">{data.name}</span>
             </div>
           </div>
-          
-          <div className="flex-1 max-w-lg relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 group-focus-within:text-white transition-colors" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              placeholder="Search commands..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-10 bg-white/5 border border-white/10 rounded-xl pl-9 pr-12 text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-all placeholder:text-neutral-600 outline-none"
-              style={{ '--tw-ring-color': data.accent } as React.CSSProperties}
-            />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none">
-              <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border border-white/10 bg-white/5 px-1.5 text-[10px] font-medium text-neutral-400">
-                <Command className="w-3 h-3" />K
-              </kbd>
-            </div>
-          </div>
-          
           <div className="w-[200px] hidden md:block" />
         </div>
       </header>
@@ -130,9 +66,6 @@ export default function ToolReference({ data }: { data: ToolData }) {
             {data.categories.map((cat: CommandCategory) => {
               const slug = getCategorySlug(cat.title);
               const isActive = activeCategory === slug;
-              const hasVisibleCommands = filteredCategories.some((c: CommandCategory) => c.title === cat.title);
-              
-              if (!hasVisibleCommands) return null;
 
               return (
                 <a
@@ -160,35 +93,29 @@ export default function ToolReference({ data }: { data: ToolData }) {
 
         {/* Main Content */}
         <main className="flex-1 w-0 pt-8 pb-24 px-4 md:px-8 xl:px-12">
-          {filteredCategories.length === 0 ? (
-            <div className="text-center py-20 text-neutral-500">
-              No commands found matching &quot;{searchQuery}&quot;
-            </div>
-          ) : (
-            <div className="space-y-16">
-              {filteredCategories.map((cat: CommandCategory) => (
-                <section 
-                  key={cat.title} 
-                  id={getCategorySlug(cat.title)}
-                  className="scroll-mt-24"
-                >
-                  <h2 className="text-2xl font-bold tracking-tight text-white mb-6 flex items-center gap-3">
-                    {cat.title}
-                    <div className="h-px flex-1 bg-white/[0.03]" />
-                  </h2>
-                  <div className="grid gap-4">
-                    {cat.commands.map((cmd: ToolCommand) => (
-                      <CommandCard
-                        key={`${cmd.command}-${cat.title}`}
-                        cmd={cmd}
-                        accent={data.accent}
-                      />
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </div>
-          )}
+          <div className="space-y-16">
+            {data.categories.map((cat: CommandCategory) => (
+              <section 
+                key={cat.title} 
+                id={getCategorySlug(cat.title)}
+                className="scroll-mt-24"
+              >
+                <h2 className="text-2xl font-bold tracking-tight text-white mb-6 flex items-center gap-3">
+                  {cat.title}
+                  <div className="h-px flex-1 bg-white/[0.03]" />
+                </h2>
+                <div className="grid gap-4">
+                  {cat.commands.map((cmd: ToolCommand, index: number) => (
+                    <CommandCard
+                      key={`${cat.title}-${cmd.command}-${cmd.description}-${index}`}
+                      cmd={cmd}
+                      accent={data.accent}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
         </main>
       </div>
     </div>
@@ -269,175 +196,6 @@ function CommandCard({ cmd, accent }: { cmd: ToolCommand, accent: string }) {
       </div>
     </div>
   );
-}
-
-interface SearchSignals {
-  normalizedQuery: string;
-  queryTokens: string[];
-  aliasPhrases: string[];
-  aliasTokens: string[];
-}
-
-function normalizeSearchText(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]+/g, " ")
-    .replace(/\s+/g, " ");
-}
-
-function tokenizeSearchText(value: string): string[] {
-  const normalized = normalizeSearchText(value);
-  return normalized ? normalized.split(" ") : [];
-}
-
-function buildSearchSignals(query: string): SearchSignals {
-  const normalizedQuery = normalizeSearchText(query);
-  const queryTokens = tokenizeSearchText(normalizedQuery);
-  const directTerms = new Set([normalizedQuery, ...queryTokens]);
-  const aliasPhrases = getAliasPhrases(normalizedQuery).filter((term) => !directTerms.has(term));
-  const aliasTokens = Array.from(
-    new Set(
-      aliasPhrases
-        .flatMap((term) => tokenizeSearchText(term))
-        .filter((token) => !directTerms.has(token))
-    )
-  );
-
-  return {
-    normalizedQuery,
-    queryTokens,
-    aliasPhrases,
-    aliasTokens,
-  };
-}
-
-function getAliasPhrases(query: string): string[] {
-  if (!query) return [];
-
-  const expandedTerms = new Set<string>();
-
-  Object.entries(aliases).forEach(([key, values]) => {
-    const normalizedKey = normalizeSearchText(key);
-    const normalizedValues = values.map((value) => normalizeSearchText(value));
-    const searchTerms = [normalizedKey, ...normalizedValues];
-    const matchesAlias = searchTerms.some((term) => matchesAliasTerm(query, term));
-
-    if (!matchesAlias) return;
-
-    expandedTerms.add(normalizedKey);
-    normalizedValues.forEach((value) => expandedTerms.add(value));
-  });
-
-  return Array.from(expandedTerms);
-}
-
-function containsPhrase(target: string, phrase: string): boolean {
-  if (!target || !phrase) return false;
-  return target.includes(phrase);
-}
-
-function matchesAliasTerm(target: string, term: string): boolean {
-  if (!target || !term) return false;
-
-  if (term.includes(" ")) {
-    return containsPhrase(target, term);
-  }
-
-  return tokenizeSearchText(target).includes(term);
-}
-
-function getTokenVariants(token: string): string[] {
-  const variants = new Set([token]);
-
-  if (token.endsWith("ies") && token.length > 4) {
-    variants.add(`${token.slice(0, -3)}y`);
-  }
-
-  if (token.endsWith("es") && token.length > 4) {
-    variants.add(token.slice(0, -2));
-  }
-
-  if (token.endsWith("s") && token.length > 3) {
-    variants.add(token.slice(0, -1));
-  }
-
-  return Array.from(variants).filter((variant) => variant.length > 1);
-}
-
-function matchesToken(target: string, token: string): boolean {
-  const targetTokens = tokenizeSearchText(target).map((candidate) => candidate.replace(/^-+/, ""));
-
-  return getTokenVariants(token).some((variant) =>
-    targetTokens.some((candidate) => candidate === variant || candidate.startsWith(variant))
-  );
-}
-
-function scoreCommand(cmd: ToolCommand, category: string, searchSignals: SearchSignals): number {
-  const commandTarget = normalizeSearchText(cmd.command);
-  const descriptionTarget = normalizeSearchText(cmd.description);
-  const categoryTarget = normalizeSearchText(category);
-  const searchTarget = `${commandTarget} ${descriptionTarget} ${categoryTarget}`.trim();
-  const { normalizedQuery, queryTokens, aliasPhrases, aliasTokens } = searchSignals;
-
-  let score = 0;
-
-  if (containsPhrase(searchTarget, normalizedQuery)) score += 10;
-  if (queryTokens.length > 0 && queryTokens.every((token) => matchesToken(searchTarget, token))) score += 6;
-
-  queryTokens.forEach((token) => {
-    if (matchesToken(commandTarget, token)) {
-      score += 3;
-      return;
-    }
-
-    if (matchesToken(descriptionTarget, token)) {
-      score += 2;
-      return;
-    }
-
-    if (matchesToken(categoryTarget, token)) {
-      score += 1;
-    }
-  });
-
-  if (containsPhrase(commandTarget, normalizedQuery)) score += 4;
-  if (queryTokens.length > 0 && queryTokens.every((token) => matchesToken(commandTarget, token))) score += 3;
-  if (containsPhrase(categoryTarget, normalizedQuery)) score += 2;
-
-  aliasPhrases.forEach((term) => {
-    if (matchesAliasTerm(commandTarget, term)) {
-      score += 3;
-      return;
-    }
-
-    if (matchesAliasTerm(descriptionTarget, term)) {
-      score += 2;
-      return;
-    }
-
-    if (matchesAliasTerm(categoryTarget, term)) {
-      score += 1;
-    }
-  });
-
-  aliasTokens.forEach((token) => {
-    if (matchesToken(commandTarget, token)) {
-      score += 2;
-      return;
-    }
-
-    if (matchesToken(descriptionTarget, token)) {
-      score += 1;
-      return;
-    }
-
-    if (matchesToken(categoryTarget, token)) {
-      score += 1;
-    }
-  });
-
-  return score;
 }
 
 function getCategorySlug(title: string): string {
