@@ -11,7 +11,7 @@ export default async function Home() {
       <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] -z-10 mix-blend-screen" />
       <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-[120px] -z-10 mix-blend-screen" />
       
-      <div className="max-w-4xl w-full flex flex-col items-center z-10 space-y-16">
+      <div className="max-w-7xl w-full flex flex-col items-center z-10 space-y-16">
         
         {/* Hero Section */}
         <header className="text-center space-y-6">
@@ -24,7 +24,7 @@ export default async function Home() {
         </header>
 
         {/* Tools Grid */}
-        <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="w-full grid lg:grid-cols-4 sm:grid-cols-2 md:grid-cols-3 grid-cols-1 gap-6">
           {tools.length === 0 ? (
             <div className="col-span-full text-center py-12 text-neutral-500">
               No tools found in <code className="bg-neutral-900 px-2 py-1 rounded">src/data/</code>.
