@@ -1,7 +1,7 @@
 {
     "name": "NPM",
     "slug": "npm",
-    "logo": "https://media-server.akshitbansal.me/api/images/logos/npm.svg",
+    "logo": "https://svgl.app/library/npm.svg",
     "accent": "#CB3837",
     "description": "Node Package Manager — the default package manager for Node.js",
     "categories": [

@@ -1,7 +1,7 @@
 {
   "name": "Git",
   "slug": "git",
-  "logo": "https://media-server.akshitbansal.me/api/images/logos/git.svg",
+  "logo": "https://svgl.app/library/git.svg",
   "accent": "#F05032",
   "description": "Distributed version control system",
   "categories": [
