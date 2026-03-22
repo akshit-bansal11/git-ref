@@ -9,7 +9,8 @@ const jetbrainsMono = {
 
 export const metadata: Metadata = {
   title: "Command Reference | Every command. One place.",
-  description: "Developer command-reference website. All your tool commands in one minimal, fast place.",
+  description:
+    "Developer command-reference website. All your tool commands in one minimal, fast place.",
 };
 
 export default function RootLayout({

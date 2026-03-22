@@ -28,7 +28,7 @@ const DATA_DIR = path.join(process.cwd(), "src/data");
 export async function getAllTools(): Promise<ToolData[]> {
   try {
     const files = await fs.readdir(DATA_DIR);
-    const jsonFiles = files.filter(file => file.endsWith(".json"));
+    const jsonFiles = files.filter((file) => file.endsWith(".json"));
 
     if (jsonFiles.length === 0) {
       console.warn(`No JSON files found in ${DATA_DIR}`);
@@ -45,7 +45,7 @@ export async function getAllTools(): Promise<ToolData[]> {
           console.error(`Error parsing ${file}:`, parseError);
           throw parseError; // Re-throw to be caught by outer catch
         }
-      })
+      }),
     );
 
     return tools;
@@ -53,8 +53,10 @@ export async function getAllTools(): Promise<ToolData[]> {
     console.error("Error reading tools data:", error);
     // In development, we want to see errors clearly
     // In production, returning empty array prevents total failure
-    if (process.env.NODE_ENV === 'development') {
-      throw new Error(`Failed to load tools data: ${error instanceof Error ? error.message : String(error)}`);
+    if (process.env.NODE_ENV === "development") {
+      throw new Error(
+        `Failed to load tools data: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
     return [];
   }
@@ -62,5 +64,5 @@ export async function getAllTools(): Promise<ToolData[]> {
 
 export async function getToolBySlug(slug: string): Promise<ToolData | null> {
   const tools = await getAllTools();
-  return tools.find(tool => tool.slug === slug) || null;
+  return tools.find((tool) => tool.slug === slug) || null;
 }

@@ -10,9 +10,8 @@ export default async function Home() {
       {/* Subtle Background Glows */}
       <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] -z-10 mix-blend-screen" />
       <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-[120px] -z-10 mix-blend-screen" />
-      
+
       <div className="max-w-7xl w-full flex flex-col items-center z-10 space-y-16">
-        
         {/* Hero Section */}
         <header className="text-center space-y-6">
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white mb-4">
@@ -27,7 +26,11 @@ export default async function Home() {
         <div className="w-full grid lg:grid-cols-3 sm:grid-cols-2 md:grid-cols-3 grid-cols-1 gap-6">
           {tools.length === 0 ? (
             <div className="col-span-full text-center py-12 text-neutral-500">
-              No tools found in <code className="bg-neutral-900 px-2 py-1 rounded">src/data/</code>.
+              No tools found in{" "}
+              <code className="bg-neutral-900 px-2 py-1 rounded">
+                src/data/
+              </code>
+              .
             </div>
           ) : (
             tools.map((tool: ToolData) => (
@@ -35,7 +38,6 @@ export default async function Home() {
             ))
           )}
         </div>
-        
       </div>
     </main>
   );
@@ -44,32 +46,38 @@ export default async function Home() {
 function ToolCard({ tool }: { tool: ToolData }) {
   // Using custom properties for dynamic hover colors
   return (
-    <Link 
-      href={`/${tool.slug}`} 
+    <Link
+      href={`/${tool.slug}`}
       className="group relative flex flex-col p-6 rounded-2xl glass-card transition-all duration-300 hover:scale-[1.02] hover:bg-neutral-800/40 border-neutral-800 hover:-translate-y-1 overflow-hidden"
-      style={{
-        '--hover-color': tool.accent,
-      } as React.CSSProperties}
+      style={
+        {
+          "--hover-color": tool.accent,
+        } as React.CSSProperties
+      }
     >
-      <div 
+      <div
         className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500"
-        style={{ background: `radial-gradient(circle at top right, ${tool.accent}, transparent 70%)` }}
+        style={{
+          background: `radial-gradient(circle at top right, ${tool.accent}, transparent 70%)`,
+        }}
       />
-      <div 
+      <div
         className="absolute top-0 right-0 w-24 h-24 blur-[40px] opacity-0 group-hover:opacity-20 transition-opacity duration-300 z-0"
         style={{ backgroundColor: tool.accent }}
       />
-      
+
       <div className="relative z-10 flex items-center mb-4">
-        <div 
+        <div
           className="w-12 h-12 rounded-xl flex items-center justify-center mr-4 bg-neutral-900 border border-neutral-800 shadow-inner group-hover:border-opacity-50 transition-colors duration-300"
-          style={{ borderColor: `color-mix(in srgb, ${tool.accent} 20%, transparent)` }}
+          style={{
+            borderColor: `color-mix(in srgb, ${tool.accent} 20%, transparent)`,
+          }}
         >
-          <Image 
-            src={tool.logo} 
-            alt={`${tool.name} logo`} 
-            width={30} 
-            height={30} 
+          <Image
+            src={tool.logo}
+            alt={`${tool.name} logo`}
+            width={30}
+            height={30}
             className="group-hover:scale-110 transition-transform duration-300 drop-shadow-md"
           />
         </div>
@@ -77,15 +85,17 @@ function ToolCard({ tool }: { tool: ToolData }) {
           {tool.name}
         </h2>
       </div>
-      
+
       <p className="text-sm text-neutral-400 leading-relaxed mt-auto relative z-10 line-clamp-2">
         {tool.description || `${tool.name} developer commands and references.`}
       </p>
 
       {/* Border gradient on hover */}
-      <div 
+      <div
         className="absolute inset-x-0 bottom-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-        style={{ background: `linear-gradient(to right, transparent, ${tool.accent}, transparent)` }}
+        style={{
+          background: `linear-gradient(to right, transparent, ${tool.accent}, transparent)`,
+        }}
       />
     </Link>
   );

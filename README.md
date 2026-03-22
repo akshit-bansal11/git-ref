@@ -34,12 +34,14 @@ Creates an optimized `.next/` build.
 ## Deployment
 
 ### Vercel
+
 ```bash
 npm install -g vercel
 vercel
 ```
 
 ### Self-hosted
+
 ```bash
 npm run build
 npm run start
