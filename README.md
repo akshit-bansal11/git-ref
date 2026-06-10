@@ -1,19 +1,30 @@
-# .cmd_ref
-
-Every command. One place.
+# .cmd-ref
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6)](https://www.typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06b6d4)](https://tailwindcss.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A fast, minimal command reference for the tools developers use every day. Built with Next.js App Router — data-driven architecture where each tool's commands live in a JSON file, and dropping a new file auto-generates a new route.
+A fast, minimal command reference for developers' everyday tools.
 
 **Live:** [cmd-ref.vercel.app](https://cmd-ref.vercel.app)
 
 ---
 
-## Tools Covered
+## Project Name + Description
+
+**.cmd-ref** is a fast, minimal command reference for developers' everyday tools. It is built with a data-driven architecture, where each tool's commands are defined in JSON and rendered through a shared UI.
+
+---
+
+## Features
+
+- Comprehensive command references for Bash, CMD, Git, GitHub CLI, NPM, PNPM, PowerShell, Prettier, and Vitest (see Tool Coverage below)
+- Structured categories per tool for quick lookup
+- Data-driven tool pages generated from JSON files in `src/data/`
+- Built-in search API for command discovery
+
+### Tool Coverage
 
 | Tool | Description | Categories |
 |------|-------------|------------|
@@ -29,24 +40,17 @@ A fast, minimal command reference for the tools developers use every day. Built 
 
 ---
 
-## Getting Started
+## Tech Stack
 
-```bash
-npm install
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
-```bash
-# Production build
-npm run build
-npm start
-```
+- **Framework:** Next.js 15 (App Router)
+- **UI:** React 19
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS v4
+- **Architecture:** Data-driven command catalog using JSON files in `src/data/`
 
 ---
 
-## Project Structure
+## Directory Structure
 
 ```
 └── src/
@@ -76,17 +80,46 @@ npm start
         └── utils.ts
 ```
 
-### Adding a New Tool
+### Data-Driven Approach
 
-The architecture is data-driven. Each tool is a JSON file in `src/data/`. A new file automatically generates a new route — no manual routing needed.
+Each tool is defined in its own JSON file under `src/data/`. Route generation and rendering are driven by these files, so adding a new tool is mostly a data operation instead of a routing/code duplication task.
 
-1. Run the generator script to scaffold the JSON structure:
+---
+
+## Running Steps
+
+1. Install dependencies:
    ```bash
-   node generate.cjs <tool-name>
+   npm install
    ```
-   The generator will automatically get the accent color and icon from svgl(https://svgl.app/).
-2. Fill in the commands and categories in the generated file.
-3. Add the tool's icon to `public/icons/` in case the icon isn't available on svgl.
+2. Start the development server:
+   ```bash
+   npm run dev
+   ```
+3. Open [http://localhost:3000](http://localhost:3000).
+4. Create a production build (optional):
+   ```bash
+   npm run build
+   npm start
+   ```
+5. Run lint checks:
+   ```bash
+   npm run lint
+   ```
+
+### Generator Script Guidance
+
+To add a new tool reference, use the generator to scaffold a JSON file:
+
+```bash
+node generate.cjs <tool-name>
+```
+
+Then:
+
+1. The script scaffolds `src/data/<tool-name>.json` and attempts to fetch an accent color/icon from [svgl](https://svgl.app/).
+2. Fill in commands and categories in the generated JSON file.
+3. Verify the icon/color mapping, and add an icon under `public/icons/` if svgl does not provide one.
 
 ---
 
@@ -95,7 +128,7 @@ The architecture is data-driven. Each tool is a JSON file in `src/data/`. A new 
 ```bash
 npm run dev      # start dev server
 npm run build    # production build
-npm run start    # start production server
+npm start        # start production server
 npm run lint     # run ESLint
 ```
 
